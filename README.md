@@ -1,0 +1,2 @@
+# Venture
+Discord Gambling Bot
