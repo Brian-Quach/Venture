@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Brian-Quach/Venture#readme",
   "dependencies": {
-    "discord.js": "^11.3.2"
+    "discord.js": "^11.3.2",
+    "nedb": "^1.8.0"
   }
 }
