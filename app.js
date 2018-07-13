@@ -1,5 +1,6 @@
 // discord.js library
 const Discord = require("discord.js");
+const Gamble = require("./gamble");
 
 // Using NeDB b/c lazy
 var Datastore = require('nedb');
@@ -43,10 +44,6 @@ client.on("message", async message => {
             "   help, h: Display all commands" +
             "```";
         message.channel.send(helpMsg);
-    } else if (["glomp"].indexOf(command) >-1) {
-        message.channel.send("glomp",{
-            reply: message.guild.members.random()
-        });
     } else if (command === 'wek') {
         // Test if bot is connected, reply w/ "wekwek"
         message.channel.send('wekwek :penguin:');
