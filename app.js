@@ -18,7 +18,7 @@ client.on("ready", () => {
 
 client.on("message", async message => {
 
-    var userId = "";
+    let userId = "";
 
     // Ignore bot messages
     if(message.author.bot) return;
@@ -91,52 +91,49 @@ client.on("message", async message => {
 
 
     } else if (command === "give"){
-        //TODO: check admin rights and shit
+        if (await Gamble.isAdmin(userId)) {
+            let amt = parseFloat(args.shift());
+            let user = message.mentions.members.first();
 
-        let amt = parseFloat(args.shift());
-        let user = message.mentions.members.first();
+            if (isNaN(amt) || (message.mentions.members.array().length !== 1)) {
+                message.channel.send("FormatErr - Use !give [amt] [user]");
+                return;
+            }
 
-        if (isNaN(amt) || (message.mentions.members.array().length !== 1)) {
-            message.channel.send("FormatErr - Use !give [amt] [user]");
-            return;
+            userId = user.id;
+            if (!(await Gamble.userExists(userId))){
+                await Gamble.createUser(userId);
+            }
+
+            await Gamble.addBal(userId, amt);
+
+            message.channel.send("Gave $" + amt + " to <@" + userId + ">");
         }
-
-        let userId = user.id;
-        if (!(await Gamble.userExists(userId))){
-            await Gamble.createUser(userId);
-        }
-
-        await Gamble.addBal(userId, amt);
-
-        message.channel.send("Gave $" + amt + " to <@" + userId + ">");
-
     } else if (command === "take"){
-        //TODO: check admin rights and shit
+        if (await Gamble.isAdmin(userId)) {
+            let userBal;
+            let amt = parseFloat(args.shift());
+            let user = message.mentions.members.first();
 
-        let userBal;
-        let amt = parseFloat(args.shift());
-        let user = message.mentions.members.first();
+            if (isNaN(amt) || (message.mentions.members.array().length !== 1)) {
+                message.channel.send("FormatErr - Use !take [amt] [user]");
+                return;
+            }
 
-        if (isNaN(amt) || (message.mentions.members.array().length !== 1)) {
-            message.channel.send("FormatErr - Use !take [amt] [user]");
-            return;
+            userId = user.id;
+            if (!(await Gamble.userExists(userId))){
+                userBal = await Gamble.createUser(userId);
+            } else {
+                userBal = await Gamble.getBal(userId);
+            }
+
+            if (userBal < amt){
+                message.channel.send("<@" + userId + "> does not have $" + amt + "!");
+            } else {
+                await Gamble.takeBal(userId, amt);
+                message.channel.send("Took $" + amt + " from <@" + userId + ">");
+            }
         }
-
-        let userId = user.id;
-        if (!(await Gamble.userExists(userId))){
-            userBal = await Gamble.createUser(userId);
-        } else {
-            userBal = await Gamble.getBal(userId);
-        }
-
-        if (userBal < amt){
-            message.channel.send("<@" + userId + "> does not have $" + amt + "!");
-        } else {
-            await Gamble.takeBal(userId, amt);
-            message.channel.send("Took $" + amt + " from <@" + userId + ">");
-        }
-
-
     } else {
         // Command not found, return error message
         var errMsg = {embed: {color: 3447003, description: "Command not found, use !help to see commands"}};

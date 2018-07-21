@@ -66,7 +66,7 @@ module.exports = {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(user.isAdmin === "true");
+                    resolve(user.isAdmin);
                 }
             });
         })
