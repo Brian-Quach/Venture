@@ -9,6 +9,9 @@ var User = (function(){
     return function item(id){
         this._id = id;
         this.bal = 10000;
+        this.isAdmin = false;
+        this.income = 1000;
+        this.lastClaimed = new Date().getTime();
     };
 }());
 
@@ -54,6 +57,41 @@ module.exports = {
                     resolve(user.bal);
                 }
             });
+        })
+    },
+
+    isAdmin: function(userId) {
+        return new Promise(function(resolve, reject){
+            users.findOne({ _id: userId }, function (err, user) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(user.isAdmin === "true");
+                }
+            });
+        })
+    },
+
+    collectIncome: function(userId) {
+        return new Promise(function(resolve, reject){
+            users.findOne({ _id: userId }, function (err, user) {
+                if (err) {
+                    reject(err);
+                } else {
+                    let prevTime = user.lastClaimed;
+                    let currTime = new Date().getTime();
+                    let income = ((currTime - prevTime)*user.income)/360000;
+                    let newAmt = user.bal + income;
+                    users.update({ _id: userId }, { $set: { bal: newAmt, lastClaimed: currTime } }, function (err, rep) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(income);
+                        }
+                    });
+                }
+            });
+
         })
     },
 

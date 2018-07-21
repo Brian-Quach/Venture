@@ -70,6 +70,17 @@ client.on("message", async message => {
             userBal = await Gamble.getBal(userId);
         }
         message.channel.send("$"+userBal);
+    } else if (command === "income"){
+        let userBal;
+        if (!(await Gamble.userExists(userId))){
+            userBal = await Gamble.createUser(userId);
+        } else {
+            userBal = await Gamble.getBal(userId);
+        }
+        let gained = await Gamble.collectIncome(userId);
+        userBal += gained;
+        message.channel.send("Collected $"+ gained + ", new balance is $" + userBal);
+
     } else if (command === "give"){
         //TODO: check admin rights and shit
 
