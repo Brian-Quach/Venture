@@ -80,7 +80,13 @@ module.exports = {
                 } else {
                     let prevTime = user.lastClaimed;
                     let currTime = new Date().getTime();
-                    let income = ((currTime - prevTime)*user.income)/360000;
+                    let timeElapsed = currTime - prevTime;
+
+                    if (timeElapsed < 300000){
+                        return resolve(-1);
+                    }
+
+                    let income = (timeElapsed*user.income)/3600000;
                     let newAmt = user.bal + income;
                     users.update({ _id: userId }, { $set: { bal: newAmt, lastClaimed: currTime } }, function (err, rep) {
                         if (err) {

@@ -63,6 +63,9 @@ client.on("message", async message => {
         // Test if bot is connected, reply w/ "wekwek"
         message.channel.send('wekwek :penguin:');
     } else if (command === "bal") {
+        if (message.mentions.members.array().length === 1){
+            userId = message.mentions.members.first().id;
+        }
         let userBal;
         if (!(await Gamble.userExists(userId))){
             userBal = await Gamble.createUser(userId);
@@ -78,8 +81,14 @@ client.on("message", async message => {
             userBal = await Gamble.getBal(userId);
         }
         let gained = await Gamble.collectIncome(userId);
-        userBal += gained;
-        message.channel.send("Collected $"+ gained + ", new balance is $" + userBal);
+
+        if (gained === -1){
+            message.channel.send("Can only collect income once every 5 minutes, try again later");
+        } else {
+            userBal += gained;
+            message.channel.send("Collected $"+ gained + ", new balance is $" + userBal);
+        }
+
 
     } else if (command === "give"){
         //TODO: check admin rights and shit
