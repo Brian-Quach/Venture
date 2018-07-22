@@ -128,7 +128,7 @@ client.on("message", async message => {
             message.channel.send("Can only collect income once every 5 minutes, try again later");
         } else {
             userBal += gained;
-            message.channel.send("Collected $"+ dollarValue(gained) + ", new balance is $" + dollarValue(userBal));
+            message.channel.send("Collected "+ dollarValue(gained) + ", new balance is " + dollarValue(userBal));
         }
     } else if (command === "transfer"){
         let amt = parseFloat(args.shift());
@@ -147,9 +147,9 @@ client.on("message", async message => {
         if ((await Gamble.getBal(userId)) > amt){
             await Gamble.takeBal(userId, amt);
             await Gamble.addBal(otherId, amt);
-            message.channel.send("Gave $" + dollarValue(amt) + " to <@" + otherId + ">");
+            message.channel.send("Gave " + dollarValue(amt) + " to <@" + otherId + ">");
         } else {
-            message.channel.send("You do not have $" + dollarValue(amt) + " :angry:");
+            message.channel.send("You do not have " + dollarValue(amt) + " :angry:");
         }
     } else if (command === "flip"){
 
