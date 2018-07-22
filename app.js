@@ -126,6 +126,11 @@ client.on("message", async message => {
             return;
         }
 
+        if ((await Gamble.getBal(userId)) < amt){
+            message.channel.send("You do not have $" + dollarValue(amt) + " :angry:");
+            return;
+        }
+
         bet =  bet.charAt(0);
         let result = await Gamble.flipCoin(userId, amt, bet);
 
