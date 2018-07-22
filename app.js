@@ -9,6 +9,10 @@ const config = require("./config.json");
 // config.prefix contains the message prefix.
 // config.status contains bot's status message
 
+function dollarValue(amt){
+    return (Math.floor(amt*100) / 100).toString();
+}
+
 client.on("ready", () => {
     // Log something when bot starts
     console.log(`rdy2go!!!`);
@@ -49,6 +53,10 @@ client.on("message", async message => {
                         value: "Use to redeem your income!"
                     },
                     {
+                        name: "transfer",
+                        value: "Give money to someone"
+                    },
+                    {
                         name: "flip",
                         value: "Flip a 2-sided coin!"
                     },
@@ -72,7 +80,7 @@ client.on("message", async message => {
         } else {
             userBal = await Gamble.getBal(userId);
         }
-        message.channel.send("$"+userBal);
+        message.channel.send("$" + dollarValue(userBal));
     } else if (command === "income"){
         let userBal;
         if (!(await Gamble.userExists(userId))){
@@ -86,9 +94,46 @@ client.on("message", async message => {
             message.channel.send("Can only collect income once every 5 minutes, try again later");
         } else {
             userBal += gained;
-            message.channel.send("Collected $"+ gained + ", new balance is $" + userBal);
+            message.channel.send("Collected $"+ dollarValue(gained) + ", new balance is $" + dollarValue(userBal));
+        }
+    } else if (command === "transfer"){
+        let amt = parseFloat(args.shift());
+        let user = message.mentions.members.first();
+
+        if (isNaN(amt) || (message.mentions.members.array().length !== 1)) {
+            message.channel.send("FormatErr - Use !transfer [amt] [user]");
+            return;
         }
 
+        let otherId = user.id;
+        if (!(await Gamble.userExists(otherId))){
+            await Gamble.createUser(otherId);
+        }
+
+        if ((await Gamble.getBal(userId)) > amt){
+            await Gamble.takeBal(userId, amt);
+            await Gamble.addBal(otherId, amt);
+            message.channel.send("Gave $" + dollarValue(amt) + " to <@" + otherId + ">");
+        } else {
+            message.channel.send("You do not have $" + dollarValue(amt) + " :angry:");
+        }
+    } else if (command === "flip"){
+        let bet = args.shift().toLowerCase();
+        let amt = parseFloat(args.shift());
+
+        if (isNaN(amt) || !(['h','t','heads','tails'].indexOf(bet) > -1)) {
+            message.channel.send("FormatErr - Use !flip [heads/tails] [amt]");
+            return;
+        }
+
+        bet =  bet.charAt(0);
+        let result = await Gamble.flipCoin(userId, amt, bet);
+
+        if (result.win) {
+            message.channel.send("Congrats! you bet " + result.bet + " and won $" + dollarValue(result.amt) + "! New bal: $" + dollarValue(result.newBal));
+        } else {
+            message.channel.send("Sorryy! you bet " + result.bet + " and lost $" + dollarValue(result.amt) + "! New bal: $" + dollarValue(result.newBal));
+        }
 
     } else if (command === "give"){
         if (await Gamble.isAdmin(userId)) {
@@ -107,7 +152,7 @@ client.on("message", async message => {
 
             await Gamble.addBal(userId, amt);
 
-            message.channel.send("Gave $" + amt + " to <@" + userId + ">");
+            message.channel.send("Gave $" + dollarValue(amt) + " to <@" + userId + ">");
         }
     } else if (command === "take"){
         if (await Gamble.isAdmin(userId)) {
@@ -131,7 +176,7 @@ client.on("message", async message => {
                 message.channel.send("<@" + userId + "> does not have $" + amt + "!");
             } else {
                 await Gamble.takeBal(userId, amt);
-                message.channel.send("Took $" + amt + " from <@" + userId + ">");
+                message.channel.send("Took $" + dollarValue(amt) + " from <@" + userId + ">");
             }
         }
     } else {

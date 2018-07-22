@@ -1,11 +1,11 @@
 //gamble.js
 // Using NeDB b/c lazy
-var Datastore = require('nedb');
+const Datastore = require('nedb');
 
-var users = new Datastore({ filename: 'db/users.db', autoload: true });
-var prevcmd = new Datastore();
+const users = new Datastore({ filename: 'db/users.db', autoload: true });
+const prevcmd = new Datastore();
 
-var User = (function(){
+const User = (function(){
     return function item(id){
         this._id = id;
         this.bal = 10000;
@@ -14,6 +14,19 @@ var User = (function(){
         this.lastClaimed = new Date().getTime();
     };
 }());
+
+const BetResult = (function(){
+    return function result(win, amt, newBal, bet){
+        this.win = win;
+        this.amt = amt;
+        this.newBal = newBal
+        this.bet = bet;
+    };
+}());
+
+function randomNumber(max) {
+    return Math.floor(Math.random()*Math.floor(max));
+}
 
 module.exports = {
     currentTime: function() {
@@ -138,6 +151,53 @@ module.exports = {
                 }
             });
 
+        })
+    },
+
+    flipCoin: function(userId, amt, bet) {
+        return new Promise(function(resolve, reject){
+            if (!(["h", "t"].indexOf(bet) > -1)) {
+                reject("Invalid Bet");
+            }
+            const coin = ['h', 't'];
+            let result = coin[randomNumber(2)];
+
+            let map = {'h': 'heads', 't': 'tails'};
+            let guess = map[result];
+
+            if (bet === result){
+                users.findOne({ _id: userId }, function (err, user) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        let newAmt = user.bal + amt;
+                        users.update({ _id: userId }, { $set: { bal: newAmt } }, function (err, rep) {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                let res = new BetResult(true, amt, newAmt, guess);
+                                resolve(res);
+                            }
+                        });
+                    }
+                });
+            } else {
+                users.findOne({ _id: userId }, function (err, user) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        let newAmt = user.bal - amt;
+                        users.update({ _id: userId }, { $set: { bal: newAmt } }, function (err, rep) {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                let res = new BetResult(false, amt, newAmt, guess);
+                                resolve(res);
+                            }
+                        });
+                    }
+                });
+            }
         })
     }
 };
