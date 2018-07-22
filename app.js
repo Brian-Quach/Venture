@@ -114,7 +114,7 @@ client.on("message", async message => {
         } else {
             userBal = await Gamble.getBal(userId);
         }
-        message.channel.send("$" + dollarValue(userBal));
+        message.channel.send(dollarValue(userBal));
     } else if (command === "income"){
         let userBal;
         if (!(await Gamble.userExists(userId))){
