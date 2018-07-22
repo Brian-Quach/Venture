@@ -16,10 +16,13 @@ const User = (function(){
 }());
 
 const BetResult = (function(){
-    return function result(win, amt, newBal, bet){
+    return function result(gameType, win, amt, earned, netGain, newBal, bet){
+        this.gameType = gameType;
         this.win = win;
         this.amt = amt;
-        this.newBal = newBal
+        this.earned = earned;
+        this.netGain = netGain;
+        this.newBal = newBal;
         this.bet = bet;
     };
 }());
@@ -162,7 +165,7 @@ module.exports = {
             const coin = ['h', 't'];
             let result = coin[randomNumber(2)];
 
-            let map = {'h': 'heads', 't': 'tails'};
+            let map = {'h': 'Heads', 't': 'Tails'};
             let guess = map[result];
 
             if (bet === result){
@@ -175,7 +178,7 @@ module.exports = {
                             if (err) {
                                 reject(err);
                             } else {
-                                let res = new BetResult(true, amt, newAmt, guess);
+                                let res = new BetResult("Coin Flip", true, amt, amt*2, amt, newAmt, guess);
                                 resolve(res);
                             }
                         });
@@ -191,7 +194,7 @@ module.exports = {
                             if (err) {
                                 reject(err);
                             } else {
-                                let res = new BetResult(false, amt, newAmt, guess);
+                                let res = new BetResult("Coin Flip", false, amt, -(amt), -(amt), newAmt, guess);
                                 resolve(res);
                             }
                         });

@@ -10,7 +10,41 @@ const config = require("./config.json");
 // config.status contains bot's status message
 
 function dollarValue(amt){
-    return (Math.floor(amt*100) / 100).toString();
+    let res;
+    if (amt < 0) {
+        res = "-";
+    } else {
+        res = "";
+    }
+    res += "$" + (Math.floor(Math.abs(amt)*100) / 100).toString();
+    return res;
+}
+
+function betResultMsg(result){
+    let outcomeMap = {true: "win!", false: "lose! :sob:"}
+    return {embed: {
+            color: 3447003,
+            title: result.gameType,
+            description: result.bet + " you " + outcomeMap[result.win],
+            fields: [
+                {
+                    name: "Bet",
+                    value: dollarValue(result.amt)
+                },
+                {
+                    name: "Gain",
+                    value: dollarValue(result.earned)
+                },
+                {
+                    name: "Net Gain",
+                    value: dollarValue(result.netGain)
+                },
+                {
+                    name: "Balance",
+                    value: dollarValue(result.newBal)
+                }
+            ]
+        }};
 }
 
 client.on("ready", () => {
@@ -118,9 +152,20 @@ client.on("message", async message => {
             message.channel.send("You do not have $" + dollarValue(amt) + " :angry:");
         }
     } else if (command === "flip"){
-        let bet = args.shift().toLowerCase();
-        let amt = parseFloat(args.shift());
 
+        if (args.length !== 2){
+            message.channel.send("FormatErr - Use !flip [heads/tails] [amt]");
+            return;
+        }
+
+        let bet = args.shift().toLowerCase();
+        let betAmt = args.shift().toLowerCase();
+
+        if (betAmt === "allin"){
+            betAmt = await Gamble.getBal(userId);
+        }
+
+        let amt = parseFloat(betAmt);
         if (isNaN(amt) || !(['h','t','heads','tails'].indexOf(bet) > -1)) {
             message.channel.send("FormatErr - Use !flip [heads/tails] [amt]");
             return;
@@ -134,11 +179,8 @@ client.on("message", async message => {
         bet =  bet.charAt(0);
         let result = await Gamble.flipCoin(userId, amt, bet);
 
-        if (result.win) {
-            message.channel.send("Congrats! you bet " + result.bet + " and won $" + dollarValue(result.amt) + "! New bal: $" + dollarValue(result.newBal));
-        } else {
-            message.channel.send("Sorryy! you bet " + result.bet + " and lost $" + dollarValue(result.amt) + "! New bal: $" + dollarValue(result.newBal));
-        }
+        console.log(result);
+        message.channel.send(betResultMsg(result));
 
     } else if (command === "give"){
         if (await Gamble.isAdmin(userId)) {
