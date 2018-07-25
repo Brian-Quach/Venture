@@ -10,12 +10,7 @@ const config = require("./config.json");
 // config.status contains bot's status message
 
 function dollarValue(amt){
-    let res;
-    if (amt < 0) {
-        res = "-";
-    } else {
-        res = "";
-    }
+    let res = "";
     let dollarAmt = (Number(amt) ).toLocaleString('en-US',
         { style: 'decimal',
           maximumFractionDigits : 2,
