@@ -16,7 +16,11 @@ function dollarValue(amt){
     } else {
         res = "";
     }
-    res += "$" + (Math.floor(Math.abs(amt)*100) / 100).toString();
+    let dollarAmt = (Number(amt) ).toLocaleString('en-US',
+        { style: 'decimal',
+          maximumFractionDigits : 2,
+          minimumFractionDigits : 2 });
+    res += "$" + dollarAmt;
     return res;
 }
 
@@ -45,6 +49,90 @@ function betResultMsg(result){
                 }
             ]
         }};
+}
+
+function dhm(t){
+    var cd = 24 * 60 * 60 * 1000,
+        ch = 60 * 60 * 1000,
+        d = Math.floor(t / cd),
+        h = Math.floor( (t - d * cd) / ch),
+        m = Math.round( (t - d * cd - h * ch) / 60000);
+    if( m === 60 ){
+        h++;
+        m = 0;
+    }
+    if( h === 24 ){
+        d++;
+        h = 0;
+    }
+    let res = "";
+    if (d === 1){
+        res += d + " day, "
+    } else if (d !== 0){
+        res += d + " days, "
+    }
+    if (h === 1){
+        res += h + " hour, "
+    } else if (h !== 0){
+        res += h + " hours, "
+    }
+    if (m === 1){
+        res += m + " minute"
+    } else if (m !== 0){
+        res += m + " minutes"
+    }
+    return res + ".";
+}
+
+function incomeMessage(income){
+    return {embed: {
+            color: 3447003,
+            title: "Income",
+            description: "You got income!",
+            fields: [
+                {
+                    name: "Given",
+                    value: dollarValue(income.amtGiven)
+                },
+                {
+                    name: "% of Income",
+                    value: ((income.amtGiven/income.income)*100).toFixed(2) + "%"
+                },
+                {
+                    name: "New Balance",
+                    value: dollarValue(income.newBal)
+                },
+                {
+                    name: "Time Since Last Income",
+                    value: dhm(income.time)
+                }
+            ]
+        }};
+}
+
+function balMessage(accBal){
+    return {embed: {
+            color: 3447003,
+            title: "Balance",
+            fields: [
+                {
+                    name: "Money",
+                    value: dollarValue(accBal.money)
+                },
+                {
+                    name: "Income",
+                    value: dollarValue(accBal.income)
+                },
+                {
+                    name: "Level",
+                    value: accBal.level
+                },
+                {
+                    name: "XP",
+                    value: accBal.xp + "/100"
+                }
+            ]
+        }}; //(accId, money, income, xp, level){
 }
 
 client.on("ready", () => {
@@ -108,27 +196,19 @@ client.on("message", async message => {
         if (message.mentions.members.array().length === 1){
             userId = message.mentions.members.first().id;
         }
-        let userBal;
-        if (!(await Gamble.userExists(userId))){
-            userBal = await Gamble.createUser(userId);
-        } else {
-            userBal = await Gamble.getBal(userId);
-        }
-        message.channel.send(dollarValue(userBal));
-    } else if (command === "income"){
-        let userBal;
-        if (!(await Gamble.userExists(userId))){
-            userBal = await Gamble.createUser(userId);
-        } else {
-            userBal = await Gamble.getBal(userId);
-        }
-        let gained = await Gamble.collectIncome(userId);
 
-        if (gained === -1){
+        if (!(await Gamble.userExists(userId))){
+            await Gamble.createUser(userId);
+        }
+        let userStats = await Gamble.accountStats(userId)
+        message.channel.send(balMessage(userStats));
+    } else if (command === "income"){
+        let income = await Gamble.collectIncome(userId);
+
+        if (income === -1){
             message.channel.send("Can only collect income once every 5 minutes, try again later");
         } else {
-            userBal += gained;
-            message.channel.send("Collected "+ dollarValue(gained) + ", new balance is " + dollarValue(userBal));
+            message.channel.send(incomeMessage(income));
         }
     } else if (command === "transfer"){
         let amt = parseFloat(args.shift());
@@ -179,7 +259,6 @@ client.on("message", async message => {
         bet =  bet.charAt(0);
         let result = await Gamble.flipCoin(userId, amt, bet);
 
-        console.log(result);
         message.channel.send(betResultMsg(result));
 
     } else if (command === "give"){
@@ -199,7 +278,7 @@ client.on("message", async message => {
 
             await Gamble.addBal(userId, amt);
 
-            message.channel.send("Gave $" + dollarValue(amt) + " to <@" + userId + ">");
+            message.channel.send("Gave " + dollarValue(amt) + " to <@" + userId + ">");
         }
     } else if (command === "take"){
         if (await Gamble.isAdmin(userId)) {
@@ -223,7 +302,7 @@ client.on("message", async message => {
                 message.channel.send("<@" + userId + "> does not have $" + amt + "!");
             } else {
                 await Gamble.takeBal(userId, amt);
-                message.channel.send("Took $" + dollarValue(amt) + " from <@" + userId + ">");
+                message.channel.send("Took " + dollarValue(amt) + " from <@" + userId + ">");
             }
         }
     } else {

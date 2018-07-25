@@ -11,7 +11,9 @@ const User = (function(){
         this.bal = 10000;
         this.isAdmin = false;
         this.income = 1000;
-        this.lastClaimed = new Date().getTime();
+        this.level = 1;
+        this.xp = 0;
+        this.lastClaimed = (new Date().getTime()) - 1800000;
     };
 }());
 
@@ -27,15 +29,31 @@ const BetResult = (function(){
     };
 }());
 
+const IncomeCollection = (function(){
+    return function income(id, amtGiven, income, newBal, time){
+        this.id = id;
+        this.amtGiven = amtGiven;
+        this.income = income;
+        this.newBal = newBal;
+        this.time = time;
+    };
+}());
+
+const AccountStats = (function(){
+    return function account(accId, money, income, xp, level){
+        this.accId = accId;
+        this.money = money;
+        this.income = income;
+        this.xp = xp;
+        this.level = level;
+    };
+}());
+
 function randomNumber(max) {
     return Math.floor(Math.random()*Math.floor(max));
 }
 
 module.exports = {
-    currentTime: function() {
-        return new Date().getTime();
-        //this.currentTime(); to use
-    },
 
     createUser: function(userId) {
         return new Promise(function(resolve, reject) {
@@ -62,6 +80,19 @@ module.exports = {
                 }
             })
         });
+    },
+
+    accountStats: function(userId){
+        return new Promise(function(resolve, reject){
+            users.findOne({ _id: userId }, function (err, user) {
+                if (err) {
+                    reject(err);
+                } else {
+                    let acc = new AccountStats(userId, user.bal, user.income, user.xp, user.level);
+                    resolve(acc);
+                }
+            });
+        })
     },
 
     getBal: function(userId) {
@@ -108,7 +139,8 @@ module.exports = {
                         if (err) {
                             reject(err);
                         } else {
-                            resolve(income);
+                            let inc = new IncomeCollection(userId, income, user.income, newAmt, timeElapsed);
+                            resolve(inc);
                         }
                     });
                 }
