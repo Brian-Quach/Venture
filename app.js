@@ -124,7 +124,7 @@ function balMessage(accBal){
                 },
                 {
                     name: "XP",
-                    value: accBal.xp + "/100"
+                    value: accBal.xp + "/1000"
                 }
             ]
         }}; //(accId, money, income, xp, level){
@@ -253,6 +253,15 @@ client.on("message", async message => {
 
         bet =  bet.charAt(0);
         let result = await Gamble.flipCoin(userId, amt, bet);
+
+        let xpGained;
+        if (result.win){
+            xpGained = 50;
+        } else {
+            xpGained = 20;
+        }
+
+        await Gamble.addXp(userId, xpGained);
 
         message.channel.send(betResultMsg(result));
 

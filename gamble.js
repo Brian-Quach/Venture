@@ -189,6 +189,31 @@ module.exports = {
         })
     },
 
+    addXp: function(userId, amt) {
+        return new Promise(function(resolve, reject){
+            users.findOne({ _id: userId }, function (err, user) {
+                if (err) {
+                    reject(err);
+                } else {
+                    let newXp, newLevel, newIncome, levelsGained;
+                    newXp = user.xp + amt;
+                    levelsGained = Math.floor(newXp/1000);
+                    newLevel = user.level + levelsGained;
+                    newXp = newXp % 1000;
+                    newIncome = user.income + levelsGained*500;
+                    users.update({ _id: userId }, { $set: { level: newLevel, xp: newXp, income: newIncome } }, function (err, rep) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+            });
+
+        })
+    },
+
     flipCoin: function(userId, amt, bet) {
         return new Promise(function(resolve, reject){
             if (!(["h", "t"].indexOf(bet) > -1)) {
