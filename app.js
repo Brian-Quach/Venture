@@ -151,6 +151,13 @@ client.on("message", async message => {
         userId = message.author.id;
     }
 
+
+    if (!(await Gamble.userExists(userId))){
+        await Gamble.createUser(userId);
+    } else {
+        await Gamble.getBal(userId);
+    }
+
     // Separate commands and args
     // args -> ["List", "of", "args"]
     const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
