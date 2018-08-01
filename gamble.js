@@ -13,6 +13,8 @@ const User = (function(){
         this.income = 1000;
         this.level = 1;
         this.xp = 0;
+        this.wins = 0;
+        this.lifetimeEarnings = 0;
         this.lastClaimed = (new Date().getTime()) - 1800000;
     };
 }());
@@ -135,7 +137,8 @@ module.exports = {
 
                     let income = (timeElapsed*user.income)/3600000;
                     let newAmt = user.bal + income;
-                    users.update({ _id: userId }, { $set: { bal: newAmt, lastClaimed: currTime } }, function (err, rep) {
+                    let lifeTime = user.lifetimeEarnings + income;
+                    users.update({ _id: userId }, { $set: { bal: newAmt, lastClaimed: currTime, lifetimeEarnings: lifeTime } }, function (err, rep) {
                         if (err) {
                             reject(err);
                         } else {
@@ -231,7 +234,9 @@ module.exports = {
                         reject(err);
                     } else {
                         let newAmt = user.bal + amt;
-                        users.update({ _id: userId }, { $set: { bal: newAmt } }, function (err, rep) {
+                        let lifeTime = user.lifetimeEarnings + amt;
+                        let wins = user.wins + 1;
+                        users.update({ _id: userId }, { $set: { bal: newAmt, lifetimeEarnings: lifeTime, wins: wins } }, function (err, rep) {
                             if (err) {
                                 reject(err);
                             } else {
