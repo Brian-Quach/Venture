@@ -3,7 +3,7 @@
 const Datastore = require('nedb');
 
 const users = new Datastore({ filename: 'db/users.db', autoload: true });
-const prevcmd = new Datastore();
+//const prevcmd = new Datastore();
 
 const User = (function(){
     return function item(id){
@@ -263,6 +263,48 @@ module.exports = {
                     }
                 });
             }
+        })
+    },
+
+    getLeaderboard: function(stat){
+        return new Promise(function(resolve, reject) {
+            if (stat === "bal"){
+                users.find({}).sort({bal: -1}).exec(function (err, top){
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(top);
+                    }
+                })
+            } else if (stat === "wins"){
+                users.find({}).sort({wins: -1}).exec(function (err, top){
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(top);
+                    }
+                })
+            } else if (stat === "lifetime"){
+                users.find({}).sort({lifetimeEarnings: -1}).exec(function (err, top){
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(top);
+                    }
+                })
+            } else if (stat === "level"){
+                users.find({}).sort({level: -1, xp: -1}).exec(function (err, top){
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(top);
+                    }
+                })
+            } else {
+                reject("Invalid");
+            }
+
+
         })
     }
 };

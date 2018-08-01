@@ -130,6 +130,28 @@ function balMessage(accBal){
         }}; //(accId, money, income, xp, level){
 }
 
+function displayLeaders(board, stat){
+    let leaderBoard = "";
+
+    for (let i = 0; i < Math.min(20, board.length); i++){
+        if (stat === "bal"){
+            leaderBoard += client.users.get(board[i]._id).username + ": " + dollarValue(board[i].bal) + "\n";
+        } else if (stat === "lifetime"){
+            leaderBoard += client.users.get(board[i]._id).username + ": " + dollarValue(board[i].lifetimeEarnings) + "\n";
+        } else if (stat === "level"){
+            leaderBoard += client.users.get(board[i]._id).username + ": " + board[i].level + "\n";
+        } else if (stat === "wins"){
+            leaderBoard += client.users.get(board[i]._id).username + ": " + board[i].wins + "\n";
+        }
+    }
+
+    return {embed: {
+            color: 3447003,
+            title: "Leaderboard (" + stat + ")",
+            description: leaderBoard
+        }};
+}
+
 client.on("ready", () => {
     // Log something when bot starts
     console.log(`rdy2go!!!`);
@@ -142,17 +164,17 @@ client.on("message", async message => {
     let userId = "";
 
     // Ignore bot messages
-    if(message.author.bot) return;
+    if (message.author.bot) return;
 
     // Checks for prefix
-    if(message.content.indexOf(config.prefix) !== 0) {
+    if (message.content.indexOf(config.prefix) !== 0) {
         return;
     } else {
         userId = message.author.id;
     }
 
 
-    if (!(await Gamble.userExists(userId))){
+    if (!(await Gamble.userExists(userId))) {
         await Gamble.createUser(userId);
     } else {
         await Gamble.getBal(userId);
@@ -163,14 +185,19 @@ client.on("message", async message => {
     const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
 
-    if (["help", "h"].indexOf(command) > -1){
-        message.channel.send({embed: {
+    if (["help", "h"].indexOf(command) > -1) {
+        message.channel.send({
+            embed: {
                 color: 3447003,
                 title: "Commands",
                 fields: [
                     {
                         name: "bal",
                         value: "Display user balance."
+                    },
+                    {
+                        name: "leaderboard, lb",
+                        value: "Show leader board"
                     },
                     {
                         name: "income",
@@ -195,24 +222,24 @@ client.on("message", async message => {
         // Test if bot is connected, reply w/ "wekwek"
         message.channel.send('wekwek :penguin:');
     } else if (command === "bal") {
-        if (message.mentions.members.array().length === 1){
+        if (message.mentions.members.array().length === 1) {
             userId = message.mentions.members.first().id;
         }
 
-        if (!(await Gamble.userExists(userId))){
+        if (!(await Gamble.userExists(userId))) {
             await Gamble.createUser(userId);
         }
         let userStats = await Gamble.accountStats(userId)
         message.channel.send(balMessage(userStats));
-    } else if (command === "income"){
+    } else if (command === "income") {
         let income = await Gamble.collectIncome(userId);
 
-        if (income === -1){
+        if (income === -1) {
             message.channel.send("Can only collect income once every 5 minutes, try again later");
         } else {
             message.channel.send(incomeMessage(income));
         }
-    } else if (command === "transfer"){
+    } else if (command === "transfer") {
         let amt = parseFloat(args.shift());
         let user = message.mentions.members.first();
 
@@ -222,20 +249,20 @@ client.on("message", async message => {
         }
 
         let otherId = user.id;
-        if (!(await Gamble.userExists(otherId))){
+        if (!(await Gamble.userExists(otherId))) {
             await Gamble.createUser(otherId);
         }
 
-        if ((await Gamble.getBal(userId)) > amt){
+        if ((await Gamble.getBal(userId)) > amt) {
             await Gamble.takeBal(userId, amt);
             await Gamble.addBal(otherId, amt);
             message.channel.send("Gave " + dollarValue(amt) + " to <@" + otherId + ">");
         } else {
             message.channel.send("You do not have " + dollarValue(amt) + " :angry:");
         }
-    } else if (command === "flip"){
+    } else if (command === "flip") {
 
-        if (args.length !== 2){
+        if (args.length !== 2) {
             message.channel.send("FormatErr - Use !flip [heads/tails] [amt]");
             return;
         }
@@ -243,26 +270,26 @@ client.on("message", async message => {
         let bet = args.shift().toLowerCase();
         let betAmt = args.shift().toLowerCase();
 
-        if (betAmt === "allin"){
+        if (betAmt === "allin") {
             betAmt = await Gamble.getBal(userId);
         }
 
         let amt = parseFloat(betAmt);
-        if (isNaN(amt) || !(['h','t','heads','tails'].indexOf(bet) > -1)) {
+        if (isNaN(amt) || !(['h', 't', 'heads', 'tails'].indexOf(bet) > -1)) {
             message.channel.send("FormatErr - Use !flip [heads/tails] [amt]");
             return;
         }
 
-        if ((await Gamble.getBal(userId)) < amt){
+        if ((await Gamble.getBal(userId)) < amt) {
             message.channel.send("You do not have $" + dollarValue(amt) + " :angry:");
             return;
         }
 
-        bet =  bet.charAt(0);
+        bet = bet.charAt(0);
         let result = await Gamble.flipCoin(userId, amt, bet);
 
         let xpGained;
-        if (result.win){
+        if (result.win) {
             xpGained = 50;
         } else {
             xpGained = 20;
@@ -272,7 +299,7 @@ client.on("message", async message => {
 
         message.channel.send(betResultMsg(result));
 
-    } else if (command === "give"){
+    } else if (command === "give") {
         if (await Gamble.isAdmin(userId)) {
             let amt = parseFloat(args.shift());
             let user = message.mentions.members.first();
@@ -283,7 +310,7 @@ client.on("message", async message => {
             }
 
             userId = user.id;
-            if (!(await Gamble.userExists(userId))){
+            if (!(await Gamble.userExists(userId))) {
                 await Gamble.createUser(userId);
             }
 
@@ -291,7 +318,7 @@ client.on("message", async message => {
 
             message.channel.send("Gave " + dollarValue(amt) + " to <@" + userId + ">");
         }
-    } else if (command === "take"){
+    } else if (command === "take") {
         if (await Gamble.isAdmin(userId)) {
             let userBal;
             let amt = parseFloat(args.shift());
@@ -303,22 +330,37 @@ client.on("message", async message => {
             }
 
             userId = user.id;
-            if (!(await Gamble.userExists(userId))){
+            if (!(await Gamble.userExists(userId))) {
                 userBal = await Gamble.createUser(userId);
             } else {
                 userBal = await Gamble.getBal(userId);
             }
 
-            if (userBal < amt){
+            if (userBal < amt) {
                 message.channel.send("<@" + userId + "> does not have $" + amt + "!");
             } else {
                 await Gamble.takeBal(userId, amt);
                 message.channel.send("Took " + dollarValue(amt) + " from <@" + userId + ">");
             }
         }
+    } else if (["leaderboard", "lb"].indexOf(command) > -1){
+
+        if (args.length !== 1) {
+            message.channel.send("FormatErr - Use !leaderboard [bal/lifetime/wins/level]");
+            return;
+        }
+        let stat = args.shift().toLowerCase();
+        if (["bal", "lifetime", "wins", "level"].indexOf(stat) === -1){
+            message.channel.send("FormatErr - Use !leaderboard [bal/lifetime/wins/level]");
+            return;
+        }
+
+        let leaderboard = await Gamble.getLeaderboard(stat);
+        message.channel.send(displayLeaders(leaderboard, stat));
+
     } else {
         // Command not found, return error message
-        var errMsg = {embed: {color: 3447003, description: "Command not found, use !help to see commands"}};
+        let errMsg = {embed: {color: 3447003, description: "Command not found, use !help to see commands"}};
         message.channel.send(errMsg);
     }
 });
