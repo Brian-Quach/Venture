@@ -152,6 +152,12 @@ function displayLeaders(board, stat){
         }};
 }
 
+
+const Datastore = require('nedb');
+let nicknameBackup = new Datastore({ filename: 'nicknames.db', autoload: true });
+
+
+
 client.on("ready", () => {
     // Log something when bot starts
     console.log(`rdy2go!!!`);
@@ -300,7 +306,7 @@ client.on("message", async message => {
         message.channel.send(betResultMsg(result));
 
     } else if (command === "give") {
-        if (await Gamble.isAdmin(userId)) {
+        if (await Gamble.isAdmin(u ,serId)) {
             let amt = parseFloat(args.shift());
             let user = message.mentions.members.first();
 
@@ -358,7 +364,20 @@ client.on("message", async message => {
         let leaderboard = await Gamble.getLeaderboard(stat);
         message.channel.send(displayLeaders(leaderboard, stat));
 
-    } else {
+    } else if (["aprilfools"].indexOf(command) > -1){
+        let mode = (args.length === 1) ? args.shift().toLowerCase() : "";
+        if (userId == "168832720120709139") {
+            if (mode == "undo"){
+                message.guild.members.forEach(member => {
+                    member.setNickname("");
+                });
+            } else {
+                message.guild.members.forEach(member => {     
+                    member.setNickname("uwu");
+                });
+            }
+        }
+    }else {
         // Command not found, return error message
         let errMsg = {embed: {color: 3447003, description: "Command not found, use !help to see commands"}};
         message.channel.send(errMsg);
