@@ -306,7 +306,7 @@ client.on("message", async message => {
         message.channel.send(betResultMsg(result));
 
     } else if (command === "give") {
-        if (await Gamble.isAdmin(u ,serId)) {
+        if (await Gamble.isAdmin(userId)) {
             let amt = parseFloat(args.shift());
             let user = message.mentions.members.first();
 
@@ -364,19 +364,35 @@ client.on("message", async message => {
         let leaderboard = await Gamble.getLeaderboard(stat);
         message.channel.send(displayLeaders(leaderboard, stat));
 
-    } else if (["aprilfools"].indexOf(command) > -1){
-        let mode = (args.length === 1) ? args.shift().toLowerCase() : "";
-        if (userId == "168832720120709139") {
-            if (mode == "undo"){
-                message.guild.members.forEach(member => {
-                    member.setNickname("");
-                });
-            } else {
-                message.guild.members.forEach(member => {     
-                    member.setNickname("uwu");
-                });
+    } else if (["yoink"].indexOf(command) > -1){
+            let userBal;
+            let amt = parseFloat(args.shift());
+            let user = message.mentions.members.first().id;
+
+            if (isNaN(amt) || (message.mentions.members.array().length !== 1)) {
+                message.channel.send("FormatErr - Use !yoink [amt] [user]");
+                return;
             }
-        }
+
+            if (!(await Gamble.userExists(user))) {
+                userBal = await Gamble.createUser(user);
+            } else {
+                userBal = await Gamble.getBal(user);
+            }
+
+            if (userBal < amt) {
+                message.channel.send("<@" + user + "> does not have $" + amt + "!");
+            } else if (amt > 500) {
+                message.channel.send("no thats 2 much :rage: yoink limit is 500");
+            }  else {
+                if(Math.random() < 0.5){
+			await Gamble.takeBal(user, amt);
+			await Gamble.addBal(userId, amt);
+			message.channel.send("yoinked " + dollarValue(amt) + " from <@" + user + ">");
+                } else {
+			message.channel.send("<@" + user + "> kept their money :sob:");
+		}
+            }        
     }else {
         // Command not found, return error message
         let errMsg = {embed: {color: 3447003, description: "Command not found, use !help to see commands"}};
